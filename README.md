@@ -3,23 +3,20 @@ Automate backport PR
 ## Usage
 
 ```
-usage: backport.py [-h] --repo {chainer,cupy} --token TOKEN --user USER --pr
-                   PR [--debug]
+usage: backport.py [-h] --repo {chainer,cupy} --token TOKEN --pr PR [--debug]
 
 optional arguments:
   -h, --help            show this help message and exit
   --repo {chainer,cupy}
                         chainer or cupy
   --token TOKEN         GitHub access token.
-  --user USER           GitHub user name.
   --pr PR               The original PR number to be backported.
-  --debug
 ```
 
 ## Example
 
 ```shell
-$ python backport.py --repo chainer --token abcdefghijklmn --user niboshi --pr 1234
+$ python backport.py --repo chainer --token abcdefghijklmn --pr 1234
 ```
 
 ## Limitation

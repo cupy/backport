@@ -55,15 +55,14 @@ def random_string(n):
 
 
 class App:
-    def __init__(self, token, organ_name, repo_name, user_name, debug=False):
+    def __init__(self, token, organ_name, repo_name, debug=False):
         assert re.match(r'^\w+$', organ_name)
         assert re.match(r'^\w+$', repo_name)
-        assert re.match(r'^\w+$', user_name)
         self.repo_name = repo_name
         self.organ_name = organ_name
         self.g = github.Github(token)
         self.repo = self.g.get_repo('{}/{}'.format(organ_name, repo_name))
-        self.user_name = user_name
+        self.user_name = self.g.get_user().name
         self.debug = debug
 
     def run(self, pr_num, target_branch):
@@ -155,7 +154,6 @@ def main(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('--repo', required=True, choices=('chainer', 'cupy'), help='chainer or cupy')
     parser.add_argument('--token', required=True, help='GitHub access token.')
-    parser.add_argument('--user', required=True, help='GitHub user name.')
     parser.add_argument('--pr', required=True, type=int, help='The original PR number to be backported.')
     parser.add_argument('--debug', action='store_true')
     args = parser.parse_args(args)
@@ -178,8 +176,7 @@ def main(args):
     app = App(
         github_token,
         organ_name = organ_name,
-        repo_name = repo_name,
-        user_name = args.user)
+        repo_name = repo_name)
 
     app.run(
         pr_num = args.pr,
