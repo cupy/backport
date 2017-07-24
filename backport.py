@@ -62,7 +62,7 @@ class App:
         self.organ_name = organ_name
         self.g = github.Github(token)
         self.repo = self.g.get_repo('{}/{}'.format(organ_name, repo_name))
-        self.user_name = self.g.get_user().name
+        self.user_name = self.g.get_user().login
         self.debug = debug
 
     def run(self, pr_num, target_branch):
