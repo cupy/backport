@@ -19,11 +19,16 @@ class GracefulError(RuntimeError):
 
 @contextlib.contextmanager
 def tempdir(delete=True, **kwargs):
+    assert delete in (True, False, 'on-success')
     temp_dir = tempfile.mkdtemp(**kwargs)
+    succeeded = False
     try:
         yield temp_dir
+        succeeded = True
+    except Exception:
+        raise
     finally:
-        if delete:
+        if delete == True or (delete == 'on-success' and succeeded):
             shutil.rmtree(temp_dir, ignore_errors=True)
 
 
@@ -93,7 +98,7 @@ class App:
         origin_remote = 'git@github.com:{}/{}'.format(self.organ_name, self.repo_name)
         user_remote = 'git@github.com:{}/{}'.format(self.user_name, self.repo_name)
 
-        with tempdir(prefix='bp-', delete=not self.debug) as tempd:
+        with tempdir(prefix='bp-', delete=False if self.debug else 'on-success') as tempd:
             print(tempd)
             workd = os.path.join(tempd, 'workdir')
 
