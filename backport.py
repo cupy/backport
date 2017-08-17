@@ -113,7 +113,7 @@ class App:
             # Fetch user remote
             #-------------------
             git_(['remote', 'add', user_name, user_remote])
-            git_(['fetch', '--depth', '1', user_remote])
+            git_(['fetch', '--depth', '1', user_name])
 
             #------------------------
             # Create backport branch
