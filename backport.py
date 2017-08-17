@@ -119,7 +119,7 @@ class App:
             # Create backport branch
             #------------------------
             tmp_branch_name = 'bp-tmp-{}'.format(random_string(20))
-            bp_branch_name = 'bp-{}'.format(branch_name)
+            bp_branch_name = 'bp-{}-{}'.format(pr_num, branch_name)
 
             git_(['checkout', '-b', tmp_branch_name])
             git_(['fetch', 'origin', merge_commit_sha])
