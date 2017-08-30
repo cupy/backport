@@ -9,12 +9,27 @@ import contextlib
 import shutil
 import tempfile
 import os
+import logging
 
 import github
 
 
-class GracefulError(RuntimeError):
+logger = logging.getLogger(__name__)
+
+
+class GracefulError(Exception):
     pass
+
+
+class GitCommandError(Exception):
+    def __init__(self, msg, cmd):
+        super(GitCommandError, self).__init__(msg)
+        self.cmd = cmd
+
+    def __str__(self):
+        return "{}\nCommand: {}".format(
+            super(GitCommandError, self).__str__(),
+            str(self.cmd))
 
 
 @contextlib.contextmanager
@@ -32,6 +47,30 @@ def tempdir(delete=True, **kwargs):
             shutil.rmtree(temp_dir, ignore_errors=True)
 
 
+class GitWorkDir:
+    def __init__(self, use_cwd, **kwargs):
+        self.use_cwd = use_cwd
+        self.tempdir = None
+        self.tempdir_kwargs = kwargs
+        self.workdir = None
+
+    def __enter__(self):
+        if self.use_cwd:
+            self.workdir = os.getcwd()
+        else:
+            self.tempdir = tempdir(**self.tempdir_kwargs)
+            tempd = self.tempdir.__enter__()
+            self.workdir = os.path.join(tempd, 'work')
+
+        return self
+
+    def __exit__(self, typ, value, traceback):
+        if self.use_cwd:
+            pass
+        else:
+            self.tempdir.__exit__(typ, value, traceback)
+
+
 def git(args, cd=None, stdout=None, stderr=None):
     cmd = ['git']
     if cd is not None:
@@ -42,15 +81,17 @@ def git(args, cd=None, stdout=None, stderr=None):
     proc = subprocess.Popen(cmd, stdout=stdout, stderr=stderr)
     stdout, stderr = proc.communicate()
     if proc.returncode != 0:
-        raise RuntimeError("Git command failed with code {}".format(proc.returncode))
+        raise GitCommandError(
+            "Git command failed with code {}".format(proc.returncode),
+            cmd)
     if stdout is not None:
         stdout = stdout.decode('utf8')
     print('')
     return stdout
 
 
-def git_out(args):
-    stdout = git(args, stdout=subprocess.PIPE)
+def git_out(args, cd=None):
+    stdout = git(args, cd=cd, stdout=subprocess.PIPE)
     return stdout.rstrip()
 
 
@@ -70,10 +111,11 @@ class App:
         self.user_name = self.g.get_user().login
         self.debug = debug
 
-    def run(self, pr_num, target_branch):
+    def run(self, pr_num, target_branch, is_continue):
         assert isinstance(pr_num, int)
         assert pr_num >= 1
         assert re.match(r'^\w+$', target_branch)
+        assert isinstance(is_continue, bool)
 
         #----------------------------------------------
         # Get information of the original pull request
@@ -86,7 +128,7 @@ class App:
         title = pr.title
 
         pr_issue = self.repo.get_issue(pr_num)
-        labels = [label.name for label in pr_issue.labels]
+        labels = set(label.name for label in pr_issue.labels)
         if 'to-be-backported' not in labels:
             raise GracefulError(
                 'PR #{} doesn\'t have \'to-be-backported\' label.'.format(pr_num))
@@ -98,36 +140,46 @@ class App:
         user_name = self.user_name
         origin_remote = 'git@github.com:{}/{}'.format(self.organ_name, self.repo_name)
         user_remote = 'git@github.com:{}/{}'.format(self.user_name, self.repo_name)
+        bp_branch_name = 'bp-{}-{}'.format(pr_num, branch_name)
 
-        with tempdir(prefix='bp-', delete=False if self.debug else 'on-success') as tempd:
-            print(tempd)
-            workd = os.path.join(tempd, 'workdir')
-
-            #-------------------
-            # Clone target repo
-            #-------------------
-            git(['clone', '--branch', target_branch, origin_remote, workd])
+        # TODO:
+        # Implement is_continue function
+        with GitWorkDir(use_cwd=is_continue, prefix='bp-', delete=False if self.debug else 'on-success') as workdir:
+            workd = workdir.workdir
+            print(workd)
 
             git_ = lambda cmd: git(cmd, cd=workd)
 
-            #-------------------
-            # Fetch user remote
-            #-------------------
-            git_(['remote', 'add', user_name, user_remote])
-            git_(['fetch', '--depth', '1', user_name])
+            if not is_continue:
+                #-------------------
+                # Clone target repo
+                #-------------------
+                git(['clone', '--branch', target_branch, origin_remote, workd])
 
-            #------------------------
-            # Create backport branch
-            #------------------------
-            tmp_branch_name = 'bp-tmp-{}'.format(random_string(20))
-            bp_branch_name = 'bp-{}-{}'.format(pr_num, branch_name)
+                #-------------------
+                # Fetch user remote
+                #-------------------
+                git_(['remote', 'add', user_name, user_remote])
+                git_(['fetch', '--depth', '1', user_name])
 
-            git_(['checkout', '-b', tmp_branch_name])
-            git_(['fetch', 'origin', merge_commit_sha])
-            git_(['cherry-pick', '-m1', merge_commit_sha])
+                #------------------------
+                # Create backport branch
+                #------------------------
+
+                git_(['checkout', '-b', bp_branch_name])
+                git_(['fetch', 'origin', merge_commit_sha])
+                try:
+                    git_(['cherry-pick', '-m1', merge_commit_sha])
+                except GitCommandError as e:
+                    sys.stderr.write(
+                        'Cherry-pick failed.\n' +
+                        'Working tree is saved at: {}\n'.format(workd) +
+                        'Go to the working tree, resolve the conflict and type `git cherry-pick --continue`,\n'
+                        'then run this script with --continue option.\n')
+                    raise GracefulError('Not cleanly cherry-picked')
 
             # Push to user remote
-            git_(['push', user_name, 'HEAD:{}'.format(bp_branch_name)])
+            git_(['push', user_name])
 
             #------------------------------
             # Create backport pull request
@@ -139,11 +191,18 @@ class App:
                 base = target_branch,
                 body = 'Backport of #{}'.format(pr_num))
             bp_pr_issue = self.repo.get_issue(bp_pr.number)
-            bp_pr_issue.set_labels('backport', *labels)
+            bp_pr_issue.set_labels('backport', *list(labels))
 
         #-----
         print("Done.")
         print(bp_pr.html_url)
+
+    def is_branch_exist(self, branch_name, workd):
+        try:
+            git_out(['rev-parse', '--verify', branch_name], cd=workd)
+        except GitCommandError as e:
+            return False
+        return True
 
     def parse_log_message(self, commit):
         msg = self.repo.get_commit(commit).commit.message
@@ -162,6 +221,7 @@ def main(args):
     parser.add_argument('--token', required=True, help='GitHub access token.')
     parser.add_argument('--pr', required=True, type=int, help='The original PR number to be backported.')
     parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--continue', action='store_true', dest='is_continue')
     args = parser.parse_args(args)
 
     if args.repo == 'chainer':
@@ -186,9 +246,12 @@ def main(args):
 
     app.run(
         pr_num = args.pr,
-        target_branch = target_branch)
+        target_branch = target_branch,
+        is_continue=args.is_continue)
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+
     try:
         main(sys.argv[1:])
     except GracefulError as e:
