@@ -91,6 +91,7 @@ class App:
             raise GracefulError(
                 'PR #{} doesn\'t have \'to-be-backported\' label.'.format(pr_num))
         labels.remove('to-be-backported')
+        labels.discard('reviewer-team')
 
         #
 
