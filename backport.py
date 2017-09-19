@@ -134,6 +134,7 @@ class App:
                 'PR #{} doesn\'t have \'to-be-backported\' label.'.format(pr_num))
         labels.remove('to-be-backported')
         labels.discard('reviewer-team')
+        labels = set(_ for _ in labels if not _.startswith('st:'))
 
         #
 
@@ -225,10 +226,10 @@ def main(args):
     args = parser.parse_args(args)
 
     if args.repo == 'chainer':
-        target_branch = 'v2'
+        target_branch = 'v3'
         organ_name, repo_name = 'chainer', 'chainer'
     elif args.repo == 'cupy':
-        target_branch = 'v1'
+        target_branch = 'v2'
         organ_name, repo_name = 'cupy', 'cupy'
     else:
         assert False
