@@ -192,7 +192,7 @@ class App:
                 raise GracefulError('Aborted')
 
             # Push to user remote
-            git_(['push', user_name])
+            git_(['push', user_name, 'HEAD'])
 
             #------------------------------
             # Create backport pull request
