@@ -222,7 +222,7 @@ def main(args):
     parser.add_argument('--token', required=True, help='GitHub access token.')
     parser.add_argument('--pr', required=True, type=int, help='The original PR number to be backported.')
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--continue', action='store_true', dest='is_continue')
+    parser.add_argument('--continue', action='store_true', dest='is_continue', help='Continues the process suspended by conflict situation.')
     args = parser.parse_args(args)
 
     if args.repo == 'chainer':
