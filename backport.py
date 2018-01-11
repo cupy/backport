@@ -143,8 +143,6 @@ class App:
         user_remote = 'git@github.com:{}/{}'.format(self.user_name, self.repo_name)
         bp_branch_name = 'bp-{}-{}'.format(pr_num, branch_name)
 
-        # TODO:
-        # Implement is_continue function
         with GitWorkDir(use_cwd=is_continue, prefix='bp-', delete=False if self.debug else 'on-success') as workdir:
             workd = workdir.workdir
             print(workd)
