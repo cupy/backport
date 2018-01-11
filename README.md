@@ -4,7 +4,7 @@ Automate backport PR
 
 ```
 usage: backport.py [-h] --repo {chainer,cupy} --token TOKEN --pr PR [--debug]
-                   [--continue]
+                   [--continue] [--abort-before-push]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -14,6 +14,10 @@ optional arguments:
   --pr PR               The original PR number to be backported.
   --debug
   --continue            Continues the process suspended by conflict situation.
+  --abort-before-push   Abort the procedure before making an push. Useful if
+                        you want to make some modification to the backport
+                        branch. Use --continue to make an actual push after
+                        making modification.
 ```
 
 ## Example
