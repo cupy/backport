@@ -111,11 +111,12 @@ class App:
         self.user_name = self.g.get_user().login
         self.debug = debug
 
-    def run(self, pr_num, target_branch, is_continue):
+    def run(self, pr_num, target_branch, is_continue, abort_before_push):
         assert isinstance(pr_num, int)
         assert pr_num >= 1
         assert re.match(r'^\w+$', target_branch)
         assert isinstance(is_continue, bool)
+        assert isinstance(abort_before_push, bool)
 
         #----------------------------------------------
         # Get information of the original pull request
@@ -143,7 +144,12 @@ class App:
         user_remote = 'git@github.com:{}/{}'.format(self.user_name, self.repo_name)
         bp_branch_name = 'bp-{}-{}'.format(pr_num, branch_name)
 
-        with GitWorkDir(use_cwd=is_continue, prefix='bp-', delete=False if self.debug else 'on-success') as workdir:
+        if self.debug or abort_before_push:
+            delete = False
+        else:
+            delete = 'on-success'
+
+        with GitWorkDir(use_cwd=is_continue, prefix='bp-', delete=delete) as workdir:
             workd = workdir.workdir
             print(workd)
 
@@ -176,6 +182,14 @@ class App:
                         'Go to the working tree, resolve the conflict and type `git cherry-pick --continue`,\n'
                         'then run this script with --continue option.\n')
                     raise GracefulError('Not cleanly cherry-picked')
+
+            if abort_before_push:
+                sys.stderr.write(
+                    'Backport procedure has been aborted due to configuration.\n' +
+                    'Working tree is saved at: {}\n'.format(workd) +
+                    'Go to the working tree, resolve the conflict and type `git cherry-pick --continue`,\n'
+                    'then run this script with --continue option.\n')
+                raise GracefulError('Aborted')
 
             # Push to user remote
             git_(['push', user_name])
@@ -221,6 +235,8 @@ def main(args):
     parser.add_argument('--pr', required=True, type=int, help='The original PR number to be backported.')
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--continue', action='store_true', dest='is_continue', help='Continues the process suspended by conflict situation.')
+    parser.add_argument('--abort-before-push', action='store_true',
+                        help='Abort the procedure before making an push. Useful if you want to make some modification to the backport branch. Use --continue to make an actual push after making modification.')
     args = parser.parse_args(args)
 
     if args.repo == 'chainer':
@@ -246,7 +262,8 @@ def main(args):
     app.run(
         pr_num = args.pr,
         target_branch = target_branch,
-        is_continue=args.is_continue)
+        is_continue=args.is_continue,
+        abort_before_push=args.abort_before_push)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
