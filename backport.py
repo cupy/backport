@@ -187,7 +187,7 @@ class App:
                 sys.stderr.write(
                     'Backport procedure has been aborted due to configuration.\n' +
                     'Working tree is saved at: {}\n'.format(workd) +
-                    'Go to the working tree, resolve the conflict and type `git cherry-pick --continue`,\n'
+                    'Go to the working tree, make a modification and commits,\n'
                     'then run this script with --continue option.\n')
                 raise GracefulError('Aborted')
 
