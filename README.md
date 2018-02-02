@@ -1,6 +1,6 @@
 Automate backport PR
 
-## Installation
+## Prerequisites
 
 Requires installation of PyGithub
 ```shell
