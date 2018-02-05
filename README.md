@@ -1,5 +1,16 @@
 Automate backport PR
 
+## Prerequisites
+
+Requires installation of PyGithub
+```shell
+pip install pygithub
+```
+
+Token is [provided from Github](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
+
+Script requires authentication to github.com via SSH. [Directions here](https://help.github.com/articles/connecting-to-github-with-ssh/).
+
 ## Usage
 
 ```
