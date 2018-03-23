@@ -39,7 +39,7 @@ $ python backport.py --repo chainer --token abcdefghijklmn --pr 1234
 
 ## Limitation
 
-Currently, backport PR is made against hard-coded branches: `v3` for `chainer` and `v2` for `cupy`.
+Currently, backport PR is made against hard-coded branches.
 
 
 ## How it works
