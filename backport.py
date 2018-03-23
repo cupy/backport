@@ -240,10 +240,10 @@ def main(args):
     args = parser.parse_args(args)
 
     if args.repo == 'chainer':
-        target_branch = 'v3'
+        target_branch = 'v4'
         organ_name, repo_name = 'chainer', 'chainer'
     elif args.repo == 'cupy':
-        target_branch = 'v2'
+        target_branch = 'v4'
         organ_name, repo_name = 'cupy', 'cupy'
     else:
         assert False
