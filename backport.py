@@ -220,7 +220,7 @@ class App:
     def parse_log_message(self, commit):
         msg = self.repo.get_commit(commit).commit.message
         head_msg, _, title = msg.split('\n')[:3]
-        m = re.match(r'^Merge pull request #(?P<pr_num>[0-9]+) from [^ /]+/(?P<branch_name>[^ /]+)$', head_msg)
+        m = re.match(r'^Merge pull request #(?P<pr_num>[0-9]+) from [^ /]+/(?P<branch_name>[^ ]+)$', head_msg)
         if m is None:
             raise GracefulError('Invalid log message: {}'.format(head_msg))
         pr_num = int(m.group('pr_num'))
