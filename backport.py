@@ -205,6 +205,7 @@ class App:
                 body = 'Backport of #{}'.format(pr_num))
             bp_pr_issue = self.repo.get_issue(bp_pr.number)
             bp_pr_issue.set_labels('backport', *list(labels))
+            bp_pr_issue.create_comment('[automatic post] Jenkins, test this please.')
 
         #-----
         print("Done.")
