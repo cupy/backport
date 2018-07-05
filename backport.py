@@ -161,12 +161,6 @@ class App:
                 #-------------------
                 git(['clone', '--branch', target_branch, origin_remote, workd])
 
-                #-------------------
-                # Fetch user remote
-                #-------------------
-                git_(['remote', 'add', user_name, user_remote])
-                git_(['fetch', '--depth', '1', user_name])
-
                 #------------------------
                 # Create backport branch
                 #------------------------
@@ -192,7 +186,7 @@ class App:
                 raise GracefulError('Aborted')
 
             # Push to user remote
-            git_(['push', user_name, 'HEAD'])
+            git_(['push', user_remote, 'HEAD'])
 
             #------------------------------
             # Create backport pull request
