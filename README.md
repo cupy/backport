@@ -14,8 +14,9 @@ Script requires authentication to github.com via SSH. [Directions here](https://
 ## Usage
 
 ```
-usage: backport.py [-h] --repo {chainer,cupy} --token TOKEN --pr PR [--debug]
-                   [--continue] [--abort-before-push]
+usage: backport.py [-h] --repo {chainer,cupy} --token TOKEN --pr PR
+                   [--branch BRANCH] [--debug] [--continue]
+                   [--abort-before-push]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -23,6 +24,7 @@ optional arguments:
                         chainer or cupy
   --token TOKEN         GitHub access token.
   --pr PR               The original PR number to be backported.
+  --branch BRANCH       Target branch to make a backport
   --debug
   --continue            Continues the process suspended by conflict situation.
   --abort-before-push   Abort the procedure before making an push. Useful if
@@ -37,16 +39,11 @@ optional arguments:
 $ python backport.py --repo chainer --token abcdefghijklmn --pr 1234
 ```
 
-## Limitation
-
-Currently, backport PR is made against hard-coded branches.
-
-
 ## How it works
 
 Basically it follows this procedure:
 
-1. Clone the target branch (e.g. `v3`) of the target repository (e.g. `chainer/chainer`) to a temporary directory.
+1. Clone the target branch (e.g. `v4`) of the target repository (e.g. `chainer/chainer`) to a temporary directory.
 2. Create a local temporary branch and cherry-pick the merge commit of the original PR.
 3. Push it to the user repository.
 4. Make a backport PR.

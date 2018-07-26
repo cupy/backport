@@ -114,7 +114,7 @@ class App:
     def run(self, pr_num, target_branch, is_continue, abort_before_push):
         assert isinstance(pr_num, int)
         assert pr_num >= 1
-        assert re.match(r'^\w+$', target_branch)
+        assert isinstance(target_branch, str)
         assert isinstance(is_continue, bool)
         assert isinstance(abort_before_push, bool)
 
@@ -228,17 +228,17 @@ def main(args):
     parser.add_argument('--repo', required=True, choices=('chainer', 'cupy'), help='chainer or cupy')
     parser.add_argument('--token', required=True, help='GitHub access token.')
     parser.add_argument('--pr', required=True, type=int, help='The original PR number to be backported.')
+    parser.add_argument('--branch', type=str, default='v4', help='Target branch to make a backport')
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--continue', action='store_true', dest='is_continue', help='Continues the process suspended by conflict situation.')
     parser.add_argument('--abort-before-push', action='store_true',
                         help='Abort the procedure before making an push. Useful if you want to make some modification to the backport branch. Use --continue to make an actual push after making modification.')
     args = parser.parse_args(args)
 
+    target_branch = args.branch
     if args.repo == 'chainer':
-        target_branch = 'v4'
         organ_name, repo_name = 'chainer', 'chainer'
     elif args.repo == 'cupy':
-        target_branch = 'v4'
         organ_name, repo_name = 'cupy', 'cupy'
     else:
         assert False
