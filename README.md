@@ -43,7 +43,7 @@ $ python backport.py --repo chainer --token abcdefghijklmn --pr 1234
 
 Basically it follows this procedure:
 
-1. Clone the target branch (e.g. `v4`) of the target repository (e.g. `chainer/chainer`) to a temporary directory.
+1. Clone the target branch (e.g. `v5`) of the target repository (e.g. `chainer/chainer`) to a temporary directory.
 2. Create a local temporary branch and cherry-pick the merge commit of the original PR.
 3. Push it to the user repository.
 4. Make a backport PR.

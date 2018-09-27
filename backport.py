@@ -228,7 +228,7 @@ def main(args):
     parser.add_argument('--repo', required=True, choices=('chainer', 'cupy'), help='chainer or cupy')
     parser.add_argument('--token', required=True, help='GitHub access token.')
     parser.add_argument('--pr', required=True, type=int, help='The original PR number to be backported.')
-    parser.add_argument('--branch', type=str, default='v4', help='Target branch to make a backport')
+    parser.add_argument('--branch', type=str, default='v5', help='Target branch to make a backport')
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--continue', action='store_true', dest='is_continue', help='Continues the process suspended by conflict situation.')
     parser.add_argument('--abort-before-push', action='store_true',
