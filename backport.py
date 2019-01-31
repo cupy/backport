@@ -174,7 +174,7 @@ class App:
                         'Cherry-pick failed.\n' +
                         'Working tree is saved at: {}\n'.format(workd) +
                         'Go to the working tree, resolve the conflict and type `git cherry-pick --continue`,\n'
-                        'then run this script with --continue option.\n')
+                        'then run this script with --continue option from the working tree directory.\n')
                     raise GracefulError('Not cleanly cherry-picked')
 
             if abort_before_push:
