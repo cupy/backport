@@ -27,6 +27,7 @@ optional arguments:
   --branch BRANCH       Target branch to make a backport
   --debug
   --continue            Continues the process suspended by conflict situation.
+                        Run from the working tree directory.
   --abort-before-push   Abort the procedure before making an push. Useful if
                         you want to make some modification to the backport
                         branch. Use --continue to make an actual push after
