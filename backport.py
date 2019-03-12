@@ -230,7 +230,7 @@ def main(args):
     parser.add_argument('--pr', required=True, type=int, help='The original PR number to be backported.')
     parser.add_argument('--branch', type=str, default='v5', help='Target branch to make a backport')
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--continue', action='store_true', dest='is_continue', help='Continues the process suspended by conflict situation.')
+    parser.add_argument('--continue', action='store_true', dest='is_continue', help='Continues the process suspended by conflict situation. Run from the working tree directory.')
     parser.add_argument('--abort-before-push', action='store_true',
                         help='Abort the procedure before making an push. Useful if you want to make some modification to the backport branch. Use --continue to make an actual push after making modification.')
     args = parser.parse_args(args)
