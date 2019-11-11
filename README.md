@@ -7,7 +7,7 @@ Requires installation of PyGithub
 pip install pygithub
 ```
 
-Token is [provided from Github](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
+Token is [provided from Github](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/). Scope with `repo/public_repo` is required.
 
 Script requires authentication to github.com via SSH. [Directions here](https://help.github.com/articles/connecting-to-github-with-ssh/).
 
