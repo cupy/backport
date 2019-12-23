@@ -145,7 +145,8 @@ class App(object):
         repo_name = self.repo_name
         origin_remote = 'git@github.com:{}/{}'.format(organ_name, repo_name)
         user_remote = 'git@github.com:{}/{}'.format(user_name, repo_name)
-        bp_branch_name = 'bp-{}-{}'.format(pr_num, branch_name)
+        bp_branch_name = 'bp-{}-{}-{}'.format(pr_num,
+                                              target_branch, branch_name)
 
         if self.debug or abort_before_push:
             delete = False
