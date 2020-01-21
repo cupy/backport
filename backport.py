@@ -241,7 +241,7 @@ def main(args):
         '--pr', required=True, type=int,
         help='The original PR number to be backported.')
     parser.add_argument(
-        '--branch', type=str, default='v6',
+        '--branch', type=str, default='v7',
         help='Target branch to make a backport')
     parser.add_argument(
         '--debug', action='store_true')
