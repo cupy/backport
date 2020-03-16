@@ -171,7 +171,7 @@ class App(object):
                 git_(['fetch', 'origin', merge_commit_sha])
                 try:
                     git_(['cherry-pick', '-m1', merge_commit_sha])
-                except GitCommandError as e:
+                except GitCommandError:
                     sys.stderr.write(
                         'Cherry-pick failed.\n'
                         'Working tree is saved at: {}\n'
@@ -214,7 +214,7 @@ class App(object):
     def is_branch_exist(self, branch_name, workd):
         try:
             git_out(['rev-parse', '--verify', branch_name], cd=workd)
-        except GitCommandError as e:
+        except GitCommandError:
             return False
         return True
 
@@ -236,7 +236,8 @@ def main(args):
         '--repo', required=True, choices=('chainer', 'cupy'),
         help='chainer or cupy')
     parser.add_argument(
-        '--token', required=True, help='GitHub access token.')
+        '--token', type=str, default=None,
+        help='GitHub access token.')
     parser.add_argument(
         '--pr', required=True, type=int,
         help='The original PR number to be backported.')
@@ -265,6 +266,12 @@ def main(args):
         assert False
 
     github_token = args.token
+    if github_token is None:
+        if 'BACKPORT_GITHUB_TOKEN' not in os.environ:
+            parser.error('GitHub Access token must be specified with '
+                         '--token or BACKPORT_GITHUB_TOKEN '
+                         'environment variable.')
+        github_token = os.environ['BACKPORT_GITHUB_TOKEN']
 
     if args.debug:
         github.enable_console_debug_logging()
