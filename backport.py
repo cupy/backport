@@ -6,6 +6,7 @@ import logging
 import os
 import random
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -162,6 +163,19 @@ class App(object):
             def git_(cmd):
                 return git(cmd, cd=workd)
 
+            manual_steps = (
+                'Working tree is saved at: {workd}\n\n'
+                'Follow these steps:\n\n'
+                '  1. Go to the working tree:\n\n'
+                '    cd {workd}\n\n'
+                '  2. Manually resolve the conflict.\n\n'
+                '  3. Continue cherry-pick.\n\n'
+                '    git cherry-pick --continue\n\n'
+                '  4. Run the backport script with the --continue option.\n\n'
+                '    {backport} --continue\n\n\n').format(
+                    workd=workd,
+                    backport=' '.join([shlex.quote(v) for v in sys.argv]))
+
             if not is_continue:
                 # Clone target repo
                 git(['clone', '--branch', target_branch, origin_remote, workd])
@@ -173,23 +187,13 @@ class App(object):
                     git_(['cherry-pick', '-m1', merge_commit_sha])
                 except GitCommandError:
                     sys.stderr.write(
-                        'Cherry-pick failed.\n'
-                        'Working tree is saved at: {}\n'
-                        'Go to the working tree, resolve the conflict and type'
-                        ' `git cherry-pick --continue`,\n'
-                        'then run this script with --continue option from the'
-                        ' working tree directory.\n'.format(workd))
+                        'Cherry-pick failed.\n{}'.format(manual_steps))
                     raise GracefulError('Not cleanly cherry-picked')
 
             if abort_before_push:
                 sys.stderr.write(
                     'Backport procedure has been aborted due to'
-                    ' configuration.\n'
-                    'Working tree is saved at: {}\n'
-                    'Go to the working tree, make a modification and'
-                    ' commits,\n'
-                    'then run this script with --continue option.\n'.format(
-                        workd))
+                    ' configuration.\n{}'.format(manual_steps))
                 raise GracefulError('Aborted')
 
             # Push to user remote
