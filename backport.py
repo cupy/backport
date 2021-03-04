@@ -134,7 +134,6 @@ class App(object):
             raise GracefulError('PR #{} is not merged'.format(pr_num))
         merge_commit_sha = pr.merge_commit_sha
         _, branch_name, _ = self.parse_log_message(merge_commit_sha)
-        pr = self.repo.get_pull(pr_num)
 
         title = pr.title
 
@@ -279,7 +278,7 @@ def main(args):
     else:
         assert False
 
-    if args.pr == args.sha and args.pr is None:
+    if args.pr is None and args.sha is None:
         parser.error('Specify only --pr or --sha')
 
     if args.pr is not None and args.hash is not None:
