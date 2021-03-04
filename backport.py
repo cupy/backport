@@ -116,19 +116,26 @@ class App(object):
         self.user_name = self.g.get_user().login
         self.debug = debug
 
-    def run(self, pr_num, target_branch, is_continue, abort_before_push):
-        assert isinstance(pr_num, int)
-        assert pr_num >= 1
+    def run(self, pr_num, sha, target_branch, is_continue, abort_before_push):
+        assert isinstance(pr_num, int) and pr_num >= 1 or pr_num is None
+        assert (pr_num is None and sha is not None) or (
+            pr_num is not None and sha is None
+        )
         assert isinstance(target_branch, str)
         assert isinstance(is_continue, bool)
         assert isinstance(abort_before_push, bool)
 
         # Get information of the original pull request
+        if sha is not None:
+            pr_num, branch_name, _ = self.parse_log_message(sha)
+
         pr = self.repo.get_pull(pr_num)
         if not pr.merged:
             raise GracefulError('PR #{} is not merged'.format(pr_num))
         merge_commit_sha = pr.merge_commit_sha
         _, branch_name, _ = self.parse_log_message(merge_commit_sha)
+        pr = self.repo.get_pull(pr_num)
+
         title = pr.title
 
         pr_issue = self.repo.get_issue(pr_num)
@@ -243,8 +250,11 @@ def main(args):
         '--token', type=str, default=None,
         help='GitHub access token.')
     parser.add_argument(
-        '--pr', required=True, type=int,
-        help='The original PR number to be backported.')
+        '--pr', default=None, type=int,
+        help='The original PR number to be backported. Exclusive with --sha')
+    parser.add_argument(
+        '--sha', default=None, type=str,
+        help='The SHA hash of the merge commit. Exclusive with --pr')
     parser.add_argument(
         '--branch', type=str, default='v8',
         help='Target branch to make a backport')
@@ -269,6 +279,12 @@ def main(args):
     else:
         assert False
 
+    if args.pr == args.sha and args.pr is None:
+        parser.error('Specify only --pr or --sha')
+
+    if args.pr is not None and args.hash is not None:
+        parser.error('Can\'t specify both --pr and --sha')
+
     github_token = args.token
     if github_token is None:
         if 'BACKPORT_GITHUB_TOKEN' not in os.environ:
@@ -287,6 +303,7 @@ def main(args):
 
     app.run(
         pr_num=args.pr,
+        sha=args.sha,
         target_branch=target_branch,
         is_continue=args.is_continue,
         abort_before_push=args.abort_before_push)
