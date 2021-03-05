@@ -281,7 +281,7 @@ def main(args):
     if args.pr is None and args.sha is None:
         parser.error('Specify only --pr or --sha')
 
-    if args.pr is not None and args.hash is not None:
+    if args.pr is not None and args.sha is not None:
         parser.error('Can\'t specify both --pr and --sha')
 
     github_token = args.token
