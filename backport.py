@@ -22,6 +22,10 @@ class GracefulError(Exception):
     pass
 
 
+class NoActionRequiredError(GracefulError):
+    pass
+
+
 class GitCommandError(Exception):
     def __init__(self, msg, cmd):
         super(GitCommandError, self).__init__(msg)
@@ -142,7 +146,7 @@ class App(object):
         pr_issue = self.repo.get_issue(pr_num)
         labels = set(label.name for label in pr_issue.labels)
         if 'to-be-backported' not in labels:
-            raise GracefulError(
+            raise NoActionRequiredError(
                 'PR #{} doesn\'t have \'to-be-backported\' label.'.format(
                     pr_num))
         labels.remove('to-be-backported')
@@ -323,6 +327,9 @@ if __name__ == '__main__':
 
     try:
         main(sys.argv[1:])
+    except NoActionRequiredError as e:
+        sys.stderr.write('No action required: {}\n'.format(e))
     except GracefulError as e:
         sys.stderr.write('Error: {}\n'.format(e))
         sys.exit(1)
+    sys.exit(0)
