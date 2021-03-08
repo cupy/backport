@@ -116,7 +116,8 @@ class App(object):
         self.user_name = self.g.get_user().login
         self.debug = debug
 
-    def run(self, pr_num, sha, target_branch, is_continue, abort_before_push):
+    def run(self, pr_num, sha, target_branch, is_continue,
+            abort_before_push, https):
         assert isinstance(pr_num, int) and pr_num >= 1 or pr_num is None
         assert (pr_num is None and sha is not None) or (
             pr_num is not None and sha is None
@@ -124,6 +125,7 @@ class App(object):
         assert isinstance(target_branch, str)
         assert isinstance(is_continue, bool)
         assert isinstance(abort_before_push, bool)
+        assert isinstance(https, bool)
 
         # Get information of the original pull request
         if sha is not None:
@@ -150,8 +152,12 @@ class App(object):
         organ_name = self.organ_name
         user_name = self.user_name
         repo_name = self.repo_name
-        origin_remote = 'git@github.com:{}/{}'.format(organ_name, repo_name)
-        user_remote = 'git@github.com:{}/{}'.format(user_name, repo_name)
+        if https:
+            uri_template = 'https://github.com/{}/{}'
+        else:
+            uri_template = 'git@github.com:{}/{}'
+        origin_remote = uri_template.format(organ_name, repo_name)
+        user_remote = uri_template.format(user_name, repo_name)
         bp_branch_name = 'bp-{}-{}-{}'.format(pr_num,
                                               target_branch, branch_name)
 
@@ -258,6 +264,9 @@ def main(args):
         '--branch', type=str, default='v8',
         help='Target branch to make a backport')
     parser.add_argument(
+        '--https', action='store_true', default=False,
+        help='Use HTTPS instead of SSH for git access')
+    parser.add_argument(
         '--debug', action='store_true')
     parser.add_argument(
         '--continue', action='store_true', dest='is_continue',
@@ -305,7 +314,8 @@ def main(args):
         sha=args.sha,
         target_branch=target_branch,
         is_continue=args.is_continue,
-        abort_before_push=args.abort_before_push)
+        abort_before_push=args.abort_before_push,
+        https=args.https)
 
 
 if __name__ == '__main__':
