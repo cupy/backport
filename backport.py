@@ -111,8 +111,8 @@ def random_string(n):
 
 class App(object):
     def __init__(self, token, organ_name, repo_name, debug=False):
-        assert re.match(r'^\w+$', organ_name)
-        assert re.match(r'^\w+$', repo_name)
+        assert isinstance(organ_name, str)
+        assert isinstance(repo_name, str)
         self.repo_name = repo_name
         self.organ_name = organ_name
         self.g = github.Github(token)
@@ -253,8 +253,9 @@ class App(object):
 def main(args):
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--repo', required=True, choices=('chainer', 'cupy'),
-        help='chainer or cupy')
+        '--repo', required=True,
+        choices=('chainer', 'cupy', 'cupy-release-tools'),
+        help='target repository')
     parser.add_argument(
         '--token', type=str, default=None,
         help='GitHub access token.')
@@ -288,6 +289,8 @@ def main(args):
         organ_name, repo_name = 'chainer', 'chainer'
     elif args.repo == 'cupy':
         organ_name, repo_name = 'cupy', 'cupy'
+    elif args.repo == 'cupy-release-tools':
+        organ_name, repo_name = 'cupy', 'cupy-release-tools'
     else:
         assert False
 
