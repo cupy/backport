@@ -120,7 +120,39 @@ class App(object):
         self.user_name = self.g.get_user().login
         self.debug = debug
 
-    def run(self, pr_num, sha, target_branch, is_continue,
+    def run_cli(self, **kwargs):
+        try:
+            self._run(**kwargs)
+        except NoActionRequiredError as e:
+            sys.stderr.write('No action required: {}\n'.format(e))
+        except GracefulError as e:
+            sys.stderr.write('Error: {}\n'.format(e))
+            return 1
+        return 0
+
+    def run_bot(self, *, pr_num, **kwargs):
+        try:
+            self._run(pr_num=pr_num, **kwargs)
+        except NoActionRequiredError as e:
+            sys.stderr.write('No action required: {}\n'.format(e))
+        except Exception as e:
+            sys.stderr.write('Backport failed: {}\n'.format(e))
+            pr = self.repo.get_pull(pr_num)
+            merged_by = 'cupy/code-owners'
+            if pr.is_merged():
+                merged_by = pr.merged_by.login
+            pr.create_issue_comment(f'''\
+@{merged_by} Failed to backport automatically.
+
+----
+
+```
+f{e}
+```
+''')
+        return 0
+
+    def _run(self, *, pr_num, sha, target_branch, is_continue,
             abort_before_push, https):
         assert isinstance(pr_num, int) and pr_num >= 1 or pr_num is None
         assert (pr_num is None and sha is not None) or (
@@ -282,6 +314,10 @@ def main(args):
         help='Abort the procedure before making an push. Useful if you want to'
         ' make some modification to the backport branch. Use --continue to'
         ' make an actual push after making modification.')
+    parser.add_argument(
+        '--bot', action='store_true', default=False,
+        help='Leave a comment when backport failed. This is intended for use'
+             ' with GitHub workflow.')
     args = parser.parse_args(args)
 
     target_branch = args.branch
@@ -316,7 +352,12 @@ def main(args):
         organ_name=organ_name,
         repo_name=repo_name)
 
-    app.run(
+    run_func = app.run_cli
+    if args.bot:
+        print('Running as bot mode (will leave a comment when failed).')
+        run_func = app.run_bot
+
+    return run_func(
         pr_num=args.pr,
         sha=args.sha,
         target_branch=target_branch,
@@ -327,12 +368,4 @@ def main(args):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-
-    try:
-        main(sys.argv[1:])
-    except NoActionRequiredError as e:
-        sys.stderr.write('No action required: {}\n'.format(e))
-    except GracefulError as e:
-        sys.stderr.write('Error: {}\n'.format(e))
-        sys.exit(1)
-    sys.exit(0)
+    sys.exit(main(sys.argv[1:]))
