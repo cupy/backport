@@ -153,7 +153,7 @@ class App(object):
         return 0
 
     def _run(self, *, pr_num, sha, target_branch, is_continue,
-            abort_before_push, https):
+             abort_before_push, https):
         assert isinstance(pr_num, int) and pr_num >= 1 or pr_num is None
         assert (pr_num is None and sha is not None) or (
             pr_num is not None and sha is None
