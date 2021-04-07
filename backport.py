@@ -147,7 +147,7 @@ class App(object):
 ----
 
 ```
-f{e}
+{e}
 ```
 ''')
         return 0
