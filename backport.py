@@ -138,11 +138,16 @@ class App(object):
         except Exception as e:
             sys.stderr.write('Backport failed: {}\n'.format(e))
             pr = self.repo.get_pull(pr_num)
-            merged_by = 'cupy/code-owners'
+            mention = 'cupy/code-owners'
             if pr.is_merged():
                 merged_by = pr.merged_by.login
+                if not merged_by.endswith('[bot]'):
+                    mention = merged_by
+                elif pr.assignee is not None:
+                    # For PRs merged by bots (Mergify), mention assignee.
+                    mention = pr.assignee.login
             pr.create_issue_comment(f'''\
-@{merged_by} Failed to backport automatically.
+@{mention} Failed to backport automatically.
 
 ----
 
