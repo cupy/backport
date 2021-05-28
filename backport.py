@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import annotations
 
 import argparse
 import contextlib
@@ -11,11 +12,18 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from typing import Any, Callable, ContextManager, Iterator, Literal, Optional, Tuple, Type
 
 import github
 
 
 logger = logging.getLogger(__name__)
+
+
+# PipeType = typing.Literal[-1, None]
+ExitCode = int
+TracebackType = Any
+TempdirDeleteOption = Literal[True, False, 'on-success']
 
 
 class GracefulError(Exception):
@@ -27,18 +35,18 @@ class NoActionRequiredError(GracefulError):
 
 
 class GitCommandError(Exception):
-    def __init__(self, msg, cmd):
+    def __init__(self, msg: str, cmd: list[str]):
         super(GitCommandError, self).__init__(msg)
         self.cmd = cmd
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{}\nCommand: {}".format(
             super(GitCommandError, self).__str__(),
             str(self.cmd))
 
 
 @contextlib.contextmanager
-def tempdir(delete=True, **kwargs):
+def tempdir(delete: TempdirDeleteOption = True, **kwargs: Any) -> Iterator[str]:
     assert delete in (True, False, 'on-success')
     temp_dir = tempfile.mkdtemp(**kwargs)
     succeeded = False
@@ -53,13 +61,13 @@ def tempdir(delete=True, **kwargs):
 
 
 class GitWorkDir(object):
-    def __init__(self, use_cwd, **kwargs):
+    def __init__(self, use_cwd: bool, **kwargs: Any):
         self.use_cwd = use_cwd
-        self.tempdir = None
+        self.tempdir: Optional[ContextManager[str]] = None
         self.tempdir_kwargs = kwargs
-        self.workdir = None
+        self.workdir: Optional[str] = None
 
-    def __enter__(self):
+    def __enter__(self) -> GitWorkDir:
         if self.use_cwd:
             self.workdir = os.getcwd()
         else:
@@ -69,14 +77,20 @@ class GitWorkDir(object):
 
         return self
 
-    def __exit__(self, typ, value, traceback):
+    def __exit__(
+            self,
+            typ: Optional[Type[BaseException]],
+            value: Optional[BaseException],
+            traceback: Optional[TracebackType]
+    ) -> None:
         if self.use_cwd:
             pass
         else:
+            assert self.tempdir is not None
             self.tempdir.__exit__(typ, value, traceback)
 
 
-def git(args, cd=None, stdout=None, stderr=None):
+def git(args: list[str], cd: Optional[str] = None, stdout: Any = None, stderr: Any = None) -> str:
     cmd = ['git']
     if cd is not None:
         assert os.path.isdir(cd)
@@ -96,21 +110,23 @@ def git(args, cd=None, stdout=None, stderr=None):
 
     print('')
 
-    return stdout
+    return stdout  # type: ignore
 
 
-def git_out(args, cd=None):
+def git_out(args: list[str], cd: Optional[str] = None) -> str:
     stdout = git(args, cd=cd, stdout=subprocess.PIPE)
     return stdout.rstrip()
 
 
+"""
 def random_string(n):
     chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     return ''.join(random.choice(chars) for _ in range(n))
+"""
 
 
 class App(object):
-    def __init__(self, token, organ_name, repo_name, debug=False):
+    def __init__(self, token: str, organ_name: str, repo_name: str, debug: bool = False):
         assert isinstance(organ_name, str)
         assert isinstance(repo_name, str)
         self.repo_name = repo_name
@@ -120,7 +136,7 @@ class App(object):
         self.user_name = self.g.get_user().login
         self.debug = debug
 
-    def run_cli(self, **kwargs):
+    def run_cli(self, **kwargs: Any) -> ExitCode:
         try:
             self._run(**kwargs)
         except NoActionRequiredError as e:
@@ -130,7 +146,7 @@ class App(object):
             return 1
         return 0
 
-    def run_bot(self, *, pr_num, **kwargs):
+    def run_bot(self, *, pr_num: int, **kwargs: Any) -> ExitCode:
         try:
             self._run(pr_num=pr_num, **kwargs)
         except NoActionRequiredError as e:
@@ -157,8 +173,8 @@ class App(object):
 ''')
         return 0
 
-    def _run(self, *, pr_num, sha, target_branch, is_continue,
-             abort_before_push, https):
+    def _run(self, *, pr_num: Optional[int], sha: Optional[str], target_branch: str, is_continue: bool,
+             abort_before_push: bool, https: bool) -> None:
         assert isinstance(pr_num, int) and pr_num >= 1 or pr_num is None
         assert (pr_num is None and sha is not None) or (
             pr_num is not None and sha is None
@@ -171,6 +187,7 @@ class App(object):
         # Get information of the original pull request
         if sha is not None:
             pr_num, branch_name, _ = self.parse_log_message(sha)
+        assert pr_num is not None
 
         pr = self.repo.get_pull(pr_num)
         if not pr.merged:
@@ -202,6 +219,7 @@ class App(object):
         bp_branch_name = 'bp-{}-{}-{}'.format(pr_num,
                                               target_branch, branch_name)
 
+        delete: TempdirDeleteOption
         if self.debug or abort_before_push:
             delete = False
         else:
@@ -210,10 +228,11 @@ class App(object):
         with GitWorkDir(
                 use_cwd=is_continue, prefix='bp-', delete=delete) as workdir:
             workd = workdir.workdir
+            assert workd is not None
 
             print(workd)
 
-            def git_(cmd):
+            def git_(cmd: list[str]) -> str:
                 return git(cmd, cd=workd)
 
             manual_steps = (
@@ -268,14 +287,16 @@ class App(object):
         print("Done.")
         print(bp_pr.html_url)
 
+    """
     def is_branch_exist(self, branch_name, workd):
         try:
             git_out(['rev-parse', '--verify', branch_name], cd=workd)
         except GitCommandError:
             return False
         return True
+    """
 
-    def parse_log_message(self, commit):
+    def parse_log_message(self, commit: str) -> Tuple[int, str, str]:
         msg = self.repo.get_commit(commit).commit.message
         head_msg, _, title = msg.split('\n')[:3]
         pattern = r'^Merge pull request #(?P<pr_num>[0-9]+) from [^ /]+/(?P<branch_name>[^ ]+)$'  # NOQA
@@ -287,7 +308,7 @@ class App(object):
         return pr_num, branch_name, title
 
 
-def main(args):
+def main(args_: list[str]) -> ExitCode:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--repo', required=True,
@@ -323,7 +344,7 @@ def main(args):
         '--bot', action='store_true', default=False,
         help='Leave a comment when backport failed. This is intended for use'
              ' with GitHub workflow.')
-    args = parser.parse_args(args)
+    args = parser.parse_args(args_)
 
     target_branch = args.branch
     if args.repo == 'chainer':
@@ -357,7 +378,7 @@ def main(args):
         organ_name=organ_name,
         repo_name=repo_name)
 
-    run_func = app.run_cli
+    run_func: Callable[..., ExitCode] = app.run_cli
     if args.bot:
         print('Running as bot mode (will leave a comment when failed).')
         run_func = app.run_bot
