@@ -254,7 +254,7 @@ class App(object):
                 title='[backport] {}'.format(title),
                 head='{}:{}'.format(self.user_name, bp_branch_name),
                 base=target_branch,
-                body='Backport of #{}'.format(pr_num))
+                body='Backport of #{} by @{}'.format(pr_num, pr.user.login))
             bp_pr_issue = self.repo.get_issue(bp_pr.number)
             bp_pr_issue.set_labels('backport', *list(labels))
             bp_pr_issue.create_comment(
