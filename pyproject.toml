@@ -1,0 +1,9 @@
+[tool.pysen]
+version = "0.9"
+
+[tool.pysen.lint]
+enable_mypy = true
+mypy_preset = "strict"
+py_version = "py39"
+[[tool.pysen.lint.mypy_targets]]
+paths = ["."]
