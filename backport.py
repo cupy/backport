@@ -12,7 +12,6 @@ import subprocess
 import sys
 import tempfile
 import types
-import typing
 from typing import Any, Callable, ContextManager, Iterator, Optional, Tuple, Type
 
 import github
@@ -21,7 +20,6 @@ import github
 logger = logging.getLogger(__name__)
 
 
-PipeType = int  # type(subprocess.PIPE)
 ExitCode = int
 TempdirDeleteOption = Any  # Literal[True, False, 'on-success']
 
@@ -90,16 +88,7 @@ class GitWorkDir(object):
             self.tempdir.__exit__(typ, value, traceback)
 
 
-@typing.overload
-def git(args: list[str], cd: Optional[str] = None, stdout: None = None, stderr: Optional[PipeType] = None) -> None: ...
-
-@typing.overload
-def git(args: list[str], cd: Optional[str], stdout: PipeType, stderr: Optional[PipeType] = None) -> str: ...
-
-@typing.overload
-def git(args: list[str], *, cd: Optional[str] = None, stdout: PipeType, stderr: Optional[PipeType] = None) -> str: ...
-
-def git(args: list[str], cd: Optional[str] = None, stdout: Optional[PipeType] = None, stderr: Optional[PipeType] = None) -> Optional[str]:
+def git(args: list[str], cd: Optional[str] = None) -> None:
     cmd = ['git']
     if cd is not None:
         assert os.path.isdir(cd)
@@ -108,21 +97,13 @@ def git(args: list[str], cd: Optional[str] = None, stdout: Optional[PipeType] = 
 
     print('**GIT** {}'.format(' '.join(cmd)))
 
-    proc = subprocess.Popen(cmd, stdout=stdout, stderr=stderr)
-    stdout1, stderr1 = proc.communicate()  # type: Tuple[Optional[bytes], Optional[bytes]]
+    proc = subprocess.run(cmd)
     if proc.returncode != 0:
         raise GitCommandError(
             "Git command failed with code {}".format(proc.returncode),
             cmd)
-    stdout2: Optional[str]
-    if stdout1 is not None:
-        stdout2 = stdout1.decode('utf8')
-    else:
-        stdout2 = None
 
     print('')
-
-    return stdout2
 
 
 class App(object):
