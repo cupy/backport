@@ -43,7 +43,8 @@ class GitCommandError(Exception):
 
 
 @contextlib.contextmanager
-def tempdir(delete: TempdirDeleteOption = True, **kwargs: Any) -> Iterator[str]:
+def tempdir(
+        delete: TempdirDeleteOption = True, **kwargs: Any) -> Iterator[str]:
     assert delete in (True, False, 'on-success')
     temp_dir = tempfile.mkdtemp(**kwargs)
     succeeded = False
@@ -85,7 +86,9 @@ def git(args: list[str], cd: Optional[str] = None) -> None:
 
 
 class App(object):
-    def __init__(self, token: str, organ_name: str, repo_name: str, debug: bool = False):
+    def __init__(
+            self, token: str, organ_name: str, repo_name: str,
+            debug: bool = False):
         assert isinstance(organ_name, str)
         assert isinstance(repo_name, str)
         self.repo_name = repo_name
@@ -132,7 +135,8 @@ class App(object):
 ''')
         return 0
 
-    def _run(self, *, pr_num: Optional[int], sha: Optional[str], target_branch: str, is_continue: bool,
+    def _run(self, *, pr_num: Optional[int], sha: Optional[str],
+             target_branch: str, is_continue: bool,
              abort_before_push: bool, https: bool) -> None:
         assert isinstance(pr_num, int) and pr_num >= 1 or pr_num is None
         assert (pr_num is None and sha is not None) or (
