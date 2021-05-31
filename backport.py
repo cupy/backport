@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import types
 from typing import Any, Callable, ContextManager, Iterator, Literal, Optional, Tuple, Type
 
 import github
@@ -20,9 +21,7 @@ import github
 logger = logging.getLogger(__name__)
 
 
-# PipeType = typing.Literal[-1, None]
 ExitCode = int
-TracebackType = Any
 TempdirDeleteOption = Literal[True, False, 'on-success']
 
 
@@ -81,7 +80,7 @@ class GitWorkDir(object):
             self,
             typ: Optional[Type[BaseException]],
             value: Optional[BaseException],
-            traceback: Optional[TracebackType]
+            traceback: Optional[types.TracebackType]
     ) -> None:
         if self.use_cwd:
             pass
