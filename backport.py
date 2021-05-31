@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import types
+import typing
 from typing import Any, Callable, ContextManager, Iterator, Optional, Tuple, Type
 
 import github
@@ -20,6 +21,7 @@ import github
 logger = logging.getLogger(__name__)
 
 
+PipeType = int  # type(subprocess.PIPE)
 ExitCode = int
 TempdirDeleteOption = Any  # Literal[True, False, 'on-success']
 
@@ -88,7 +90,16 @@ class GitWorkDir(object):
             self.tempdir.__exit__(typ, value, traceback)
 
 
-def git(args: list[str], cd: Optional[str] = None, stdout: Any = None, stderr: Any = None) -> str:
+@typing.overload
+def git(args: list[str], cd: Optional[str] = None, stdout: None = None, stderr: Optional[PipeType] = None) -> None: ...
+
+@typing.overload
+def git(args: list[str], cd: Optional[str], stdout: PipeType, stderr: Optional[PipeType] = None) -> str: ...
+
+@typing.overload
+def git(args: list[str], *, cd: Optional[str] = None, stdout: PipeType, stderr: Optional[PipeType] = None) -> str: ...
+
+def git(args: list[str], cd: Optional[str] = None, stdout: Optional[PipeType] = None, stderr: Optional[PipeType] = None) -> Optional[str]:
     cmd = ['git']
     if cd is not None:
         assert os.path.isdir(cd)
@@ -98,18 +109,20 @@ def git(args: list[str], cd: Optional[str] = None, stdout: Any = None, stderr: A
     print('**GIT** {}'.format(' '.join(cmd)))
 
     proc = subprocess.Popen(cmd, stdout=stdout, stderr=stderr)
-    del stdout, stderr
-    stdout_, stderr_ = proc.communicate()
+    stdout1, stderr1 = proc.communicate()  # type: Tuple[Optional[bytes], Optional[bytes]]
     if proc.returncode != 0:
         raise GitCommandError(
             "Git command failed with code {}".format(proc.returncode),
             cmd)
-    if stdout is not None:
-        stdout = stdout.decode('utf8')
+    stdout2: Optional[str]
+    if stdout1 is not None:
+        stdout2 = stdout1.decode('utf8')
+    else:
+        stdout2 = None
 
     print('')
 
-    return stdout  # type: ignore
+    return stdout2
 
 
 class App(object):
@@ -219,7 +232,7 @@ class App(object):
 
             print(workd)
 
-            def git_(cmd: list[str]) -> str:
+            def git_(cmd: list[str]) -> None:
                 return git(cmd, cd=workd)
 
             manual_steps = (
