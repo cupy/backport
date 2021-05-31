@@ -5,7 +5,6 @@ import argparse
 import contextlib
 import logging
 import os
-import random
 import re
 import shlex
 import shutil
@@ -110,18 +109,6 @@ def git(args: list[str], cd: Optional[str] = None, stdout: Any = None, stderr: A
     print('')
 
     return stdout  # type: ignore
-
-
-def git_out(args: list[str], cd: Optional[str] = None) -> str:
-    stdout = git(args, cd=cd, stdout=subprocess.PIPE)
-    return stdout.rstrip()
-
-
-"""
-def random_string(n):
-    chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    return ''.join(random.choice(chars) for _ in range(n))
-"""
 
 
 class App(object):
@@ -285,15 +272,6 @@ class App(object):
 
         print("Done.")
         print(bp_pr.html_url)
-
-    """
-    def is_branch_exist(self, branch_name, workd):
-        try:
-            git_out(['rev-parse', '--verify', branch_name], cd=workd)
-        except GitCommandError:
-            return False
-        return True
-    """
 
     def parse_log_message(self, commit: str) -> Tuple[int, str, str]:
         msg = self.repo.get_commit(commit).commit.message
