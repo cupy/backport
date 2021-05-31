@@ -12,7 +12,7 @@ import subprocess
 import sys
 import tempfile
 import types
-from typing import Any, Callable, ContextManager, Iterator, Literal, Optional, Tuple, Type
+from typing import Any, Callable, ContextManager, Iterator, Optional, Tuple, Type
 
 import github
 
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 ExitCode = int
-TempdirDeleteOption = Literal[True, False, 'on-success']
+TempdirDeleteOption = Any  # Literal[True, False, 'on-success']
 
 
 class GracefulError(Exception):
@@ -98,7 +98,8 @@ def git(args: list[str], cd: Optional[str] = None, stdout: Any = None, stderr: A
     print('**GIT** {}'.format(' '.join(cmd)))
 
     proc = subprocess.Popen(cmd, stdout=stdout, stderr=stderr)
-    stdout, stderr = proc.communicate()
+    del stdout, stderr
+    stdout_, stderr_ = proc.communicate()
     if proc.returncode != 0:
         raise GitCommandError(
             "Git command failed with code {}".format(proc.returncode),
