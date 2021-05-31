@@ -11,8 +11,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import types
-from typing import Any, Callable, ContextManager, Iterator, Optional, Tuple, Type
+from typing import Any, Callable, Iterator, Optional, Tuple
 
 import github
 
@@ -58,34 +57,13 @@ def tempdir(delete: TempdirDeleteOption = True, **kwargs: Any) -> Iterator[str]:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-class GitWorkDir(object):
-    def __init__(self, use_cwd: bool, **kwargs: Any):
-        self.use_cwd = use_cwd
-        self.tempdir: Optional[ContextManager[str]] = None
-        self.tempdir_kwargs = kwargs
-        self.workdir: Optional[str] = None
-
-    def __enter__(self) -> GitWorkDir:
-        if self.use_cwd:
-            self.workdir = os.getcwd()
-        else:
-            self.tempdir = tempdir(**self.tempdir_kwargs)
-            tempd = self.tempdir.__enter__()
-            self.workdir = os.path.join(tempd, 'work')
-
-        return self
-
-    def __exit__(
-            self,
-            typ: Optional[Type[BaseException]],
-            value: Optional[BaseException],
-            traceback: Optional[types.TracebackType]
-    ) -> None:
-        if self.use_cwd:
-            pass
-        else:
-            assert self.tempdir is not None
-            self.tempdir.__exit__(typ, value, traceback)
+@contextlib.contextmanager
+def git_work_dir(use_cwd: bool, **tempdir_kwargs: Any) -> Iterator[str]:
+    if use_cwd:
+        yield os.getcwd()
+    else:
+        with tempdir(**tempdir_kwargs) as tempd:
+            yield os.path.join(tempd, 'work')
 
 
 def git(args: list[str], cd: Optional[str] = None) -> None:
@@ -206,9 +184,8 @@ class App(object):
         else:
             delete = 'on-success'
 
-        with GitWorkDir(
-                use_cwd=is_continue, prefix='bp-', delete=delete) as workdir:
-            workd = workdir.workdir
+        with git_work_dir(
+                use_cwd=is_continue, prefix='bp-', delete=delete) as workd:
             assert workd is not None
 
             print(workd)
