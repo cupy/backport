@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from typing import Any, Callable, Iterator, Optional, Tuple
+from typing import Any, Callable, Iterator, Optional, Tuple, TYPE_CHECKING
 
 import github
 
@@ -20,7 +20,12 @@ logger = logging.getLogger(__name__)
 
 
 ExitCode = int
-TempdirDeleteOption = Any  # Literal[True, False, 'on-success']
+if TYPE_CHECKING:
+    # Support Python 3.7. Use typing_extensions because mypy installs it.
+    # `try: from typing import Literal` causes:
+    # error: Module 'typing' has no attribute 'Literal'  [attr-defined]
+    from typing_extensions import Literal
+    TempdirDeleteOption = Literal[True, False, 'on-success']
 
 
 class GracefulError(Exception):
