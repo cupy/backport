@@ -16,8 +16,8 @@ jobs:
 
     - name: install
       run: |
-        pip install pygithub pysen mypy
+        pip install pygithub mypy
 
-    - name: pysen
+    - name: mypy
       run: |
-        pysen run lint
+        mypy .
