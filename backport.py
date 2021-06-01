@@ -265,7 +265,7 @@ def main(args_: list[str]) -> ExitCode:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--repo', required=True,
-        choices=('chainer', 'cupy', 'cupy-release-tools'),
+        choices=('chainer', 'cupy', 'cupy-release-tools', 'sandbox'),
         help='target repository')
     parser.add_argument(
         '--token', type=str, default=None,
@@ -306,6 +306,8 @@ def main(args_: list[str]) -> ExitCode:
         organ_name, repo_name = 'cupy', 'cupy'
     elif args.repo == 'cupy-release-tools':
         organ_name, repo_name = 'cupy', 'cupy-release-tools'
+    elif args.repo == 'sandbox':
+        organ_name, repo_name = 'chainer-ci', 'backport-sandbox'
     else:
         assert False
 
