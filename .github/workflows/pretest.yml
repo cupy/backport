@@ -14,9 +14,17 @@ jobs:
       with:
         python-version: '3.7'
 
-    - name: install
+    - name: install dependencies
       run: |
-        pip install pygithub mypy
+        pip install pygithub
+
+    - name: run help
+      run: |
+        ./backport.py --help
+
+    - name: install dev dependencies
+      run: |
+        pip install mypy
 
     - name: mypy
       run: |
