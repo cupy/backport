@@ -248,8 +248,6 @@ class App(object):
                 body='Backport of #{} by @{}'.format(pr_num, pr.user.login))
             bp_pr_issue = self.repo.get_issue(bp_pr.number)
             bp_pr_issue.set_labels('backport', *list(labels))
-            bp_pr_issue.create_comment(
-                '[automatic post] Jenkins, test this please.')
 
         print("Done.")
         print(bp_pr.html_url)
