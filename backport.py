@@ -253,7 +253,7 @@ class App(object):
         print(bp_pr.html_url)
 
     def parse_log_message(self, commit: str) -> Tuple[int, str, str]:
-        msg = self.repo.get_commit(commit).commit.message
+        msg = self.repo.get_commit(commit).commit.message + '\n\n'
         head_msg, _, title = msg.split('\n')[:3]
         pattern = r'^Merge pull request #(?P<pr_num>[0-9]+) from [^ /]+/(?P<branch_name>[^ ]+)$'  # NOQA
         m = re.match(pattern, head_msg)
