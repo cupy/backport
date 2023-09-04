@@ -90,7 +90,7 @@ def git(args: list[str], cd: Optional[str] = None) -> None:
     print('')
 
 
-class App(object):
+class App:
     def __init__(
             self, token: str, organ_name: str, repo_name: str,
             debug: bool = False):
@@ -98,7 +98,7 @@ class App(object):
         assert isinstance(repo_name, str)
         self.repo_name = repo_name
         self.organ_name = organ_name
-        self.g = github.Github(token)
+        self.g = github.Github(auth=github.Auth.Token(token))
         self.repo = self.g.get_repo('{}/{}'.format(organ_name, repo_name))
         self.user_name = self.g.get_user().login
         self.debug = debug
