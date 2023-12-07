@@ -280,7 +280,7 @@ def main(args_: list[str]) -> ExitCode:
         '--sha', default=None, type=str,
         help='The SHA hash of the merge commit. Exclusive with --pr')
     parser.add_argument(
-        '--branch', type=str, default='v12',
+        '--branch', type=str, default='v13',
         help='Target branch to make a backport')
     parser.add_argument(
         '--https', action='store_true', default=False,
