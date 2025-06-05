@@ -4,15 +4,15 @@ on: [push, pull_request]
 
 jobs:
   pretest:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: setup python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.7'
+        python-version: '3.13'
 
     - name: install dependencies
       run: |
