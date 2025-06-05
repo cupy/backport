@@ -1,73 +1,34 @@
-Automate backport PR
+# `backport` - Tool to semi-automate backport pull requests
+
+This tool is used to backport pull requests labeled `to-be-backported`.
+
+Generally backport PRs are [automatically created by GitHub Actions workflow](https://github.com/cupy/cupy/blob/main/.github/workflows/backport.yml).
+However, in case there is a conflict during the backport process, you need to run this tool in your local environment to manually resolve the conflict.
 
 ## Prerequisites
 
-Requires installation of PyGithub
-```shell
-pip install pygithub
-```
-
-Token is [provided from Github](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/). Scope with `repo/public_repo` is required.
-
-Script requires authentication to github.com via SSH. [Directions here](https://help.github.com/articles/connecting-to-github-with-ssh/).
+1. Create a [classic GitHub token with `public_repo` scope](https://github.com/settings/tokens/new?scopes=public_repo).
+2. Install PyGitHub (`pip install pygithub`).
 
 ## Usage
 
-```
-usage: backport.py [-h] --repo {chainer,cupy} --token TOKEN --pr PR
-                   [--branch BRANCH] [--debug] [--continue]
-                   [--abort-before-push]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --repo {chainer,cupy}
-                        chainer or cupy
-  --token TOKEN         GitHub access token.
-  --pr PR               The original PR number to be backported.
-  --branch BRANCH       Target branch to make a backport
-  --debug
-  --continue            Continues the process suspended by conflict situation.
-                        Run from the working tree directory.
-  --abort-before-push   Abort the procedure before making an push. Useful if
-                        you want to make some modification to the backport
-                        branch. Use --continue to make an actual push after
-                        making modification.
-```
-
-## Example
+For example, to backport PR #9876:
 
 ```shell
-$ python backport.py --repo chainer --token abcdefghijklmn --pr 1234
+$ export BACKPORT_GITHUB_TOKEN=ghp_XXXXXXXXXXXXXXXXXXXXX
+$ python backport.py --repo cupy --pr 9876
 ```
+
+If there are conflicts during backport, the tool will stop and ask you to resolve the conflict manually.
+Follow the instructions shown.
+
+Run `python backport.py --help` for additional options.
 
 ## How it works
 
 Basically it follows this procedure:
 
-1. Clone the target branch (e.g. `v5`) of the target repository (e.g. `chainer/chainer`) to a temporary directory.
+1. Clone the target branch (e.g. `v13`) of the target repository (e.g. `cupy/cupy`) to a temporary directory.
 2. Create a local temporary branch and cherry-pick the merge commit of the original PR.
 3. Push it to the user repository.
 4. Make a backport PR.
-
-
-## In the case of conflict
-
-If conflict has occurred during backporting, you have to resolve conflict yourself,
-and rerun the command with additional `--continue` option.
-
-```shell
-$ python backport.py --repo chainer --token abcdefghijklmn --pr 1234
-...
-Cherry-pick failed.
-Working tree is saved at: /tmp/bp-FktJXG5R
-Go to the working tree, resolve the conflict and type `git cherry-pick --continue`,
-then run this script with --continue option.
-
-$ cd /tmp/bp-FktJXG5R
-
-$ <resolve conflict>
-
-$ git cherry-pick --continue
-
-$ python backport.py --repo chainer --token abcdefghijklmn --pr 1234 --continue
-```
