@@ -93,6 +93,9 @@ def git(args: list[str], cd: Optional[str] = None) -> None:
 class App:
     def __init__(
             self, token: str, organ_name: str, repo_name: str,
+            *,
+            fork_owner: Optional[str] = None,
+            fork_repo: Optional[str] = None,
             debug: bool = False):
         assert isinstance(organ_name, str)
         assert isinstance(repo_name, str)
@@ -100,7 +103,8 @@ class App:
         self.organ_name = organ_name
         self.g = github.Github(auth=github.Auth.Token(token))
         self.repo = self.g.get_repo('{}/{}'.format(organ_name, repo_name))
-        self.user_name = self.g.get_user().login
+        self.fork_repo_owner = fork_owner or self.g.get_user().login
+        self.fork_repo_name = fork_repo or repo_name
         self.debug = debug
 
     def run_cli(self, **kwargs: Any) -> ExitCode:
@@ -175,15 +179,14 @@ class App:
         labels.discard('reviewer-team')
         labels = set(_ for _ in labels if not _.startswith('st:'))
 
-        organ_name = self.organ_name
-        user_name = self.user_name
-        repo_name = self.repo_name
         if https:
             uri_template = 'https://github.com/{}/{}'
         else:
             uri_template = 'git@github.com:{}/{}'
-        origin_remote = uri_template.format(organ_name, repo_name)
-        user_remote = uri_template.format(user_name, repo_name)
+        origin_remote = uri_template.format(
+            self.organ_name, self.repo_name)
+        user_remote = uri_template.format(
+            self.fork_repo_owner, self.fork_repo_name)
         bp_branch_name = 'bp-{}-{}-{}'.format(pr_num,
                                               target_branch, branch_name)
 
@@ -243,7 +246,7 @@ class App:
 
             bp_pr = self.repo.create_pull(
                 title='[backport] {}'.format(title),
-                head='{}:{}'.format(self.user_name, bp_branch_name),
+                head='{}:{}'.format(self.fork_repo_owner, bp_branch_name),
                 base=target_branch,
                 body='Backport of #{} by @{}'.format(pr_num, pr.user.login))
             bp_pr_issue = self.repo.get_issue(bp_pr.number)
@@ -270,6 +273,12 @@ def main(args_: list[str]) -> ExitCode:
         '--repo', required=True,
         choices=('chainer', 'cupy', 'cupy-release-tools', 'sandbox'),
         help='target repository')
+    parser.add_argument(
+        '--fork-owner', type=str, default=None,
+        help='owner of the fork repository')
+    parser.add_argument(
+        '--fork-repo', type=str, default=None,
+        help='name of the fork repository')
     parser.add_argument(
         '--token', type=str, default=None,
         help='GitHub access token.')
@@ -334,7 +343,10 @@ def main(args_: list[str]) -> ExitCode:
     app = App(
         github_token,
         organ_name=organ_name,
-        repo_name=repo_name)
+        repo_name=repo_name,
+        fork_owner=args.fork_owner,
+        fork_repo=args.fork_repo,
+    )
 
     run_func: Callable[..., ExitCode] = app.run_cli
     if args.bot:
